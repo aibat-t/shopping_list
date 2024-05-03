@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shopping_list/data/dummy_items.dart';
 import 'package:shopping_list/model/grocery_item.dart';
 import 'package:shopping_list/widget/new_item.dart';
 
@@ -20,37 +19,54 @@ class _GroceryListState extends State<GroceryList> {
       ),
     );
 
-    if(newItem == null) return;
+    if (newItem == null) return;
 
     setState(() {
-      _groceryItems.add(newItem!);
+      _groceryItems.add(newItem);
+    });
+  }
+
+  void _removeItem(GroceryItem item) {
+    setState(() {
+      _groceryItems.remove(item);
     });
   }
 
   @override
   Widget build(context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your groceries'),
-        actions: [
-          IconButton(
-            onPressed: _addItem,
-            icon: const Icon(Icons.add),
-          ),
-        ],
-      ),
-      body: ListView.builder(
+    Widget content = const Center(child: Text('No items added'));
+
+    if (_groceryItems.isNotEmpty) {
+      content = ListView.builder(
         itemCount: _groceryItems.length,
-        itemBuilder: (ctx, index) => ListTile(
-          title: Text(_groceryItems[index].name),
-          leading: Container(
-            width: 16,
-            height: 16,
-            color: _groceryItems[index].category.color,
+        itemBuilder: (ctx, index) => Dismissible(
+          onDismissed: (direction) {
+            _removeItem(_groceryItems[index]);
+          },
+          key: ValueKey(_groceryItems[index].id),
+          child: ListTile(
+            title: Text(_groceryItems[index].name),
+            leading: Container(
+              width: 16,
+              height: 16,
+              color: _groceryItems[index].category.color,
+            ),
+            trailing: Text(_groceryItems[index].quantity.toString()),
           ),
-          trailing: Text(_groceryItems[index].quantity.toString()),
         ),
-      ),
-    );
+      );
+    }
+
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Your groceries'),
+          actions: [
+            IconButton(
+              onPressed: _addItem,
+              icon: const Icon(Icons.add),
+            ),
+          ],
+        ),
+        body: content);
   }
 }
