@@ -16,6 +16,8 @@ class GroceryList extends StatefulWidget {
 
 class _GroceryListState extends State<GroceryList> {
   List<GroceryItem> _groceryItems = [];
+  var _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -30,12 +32,17 @@ class _GroceryListState extends State<GroceryList> {
     );
     final response = await http.get(url);
 
-    final Map<String, dynamic> listData =
-        json.decode(response.body);
+    if(response.statusCode >= 400) {
+      setState(() {
+        _error = 'Failed to fetch data';
+      });
+    }
+    final Map<String, dynamic> listData = json.decode(response.body);
     final List<GroceryItem> loadedItems = [];
     for (final item in listData.entries) {
       final category = categories.entries
-          .firstWhere((cat) => cat.value.name == item.value['category']).value;
+          .firstWhere((cat) => cat.value.name == item.value['category'])
+          .value;
 
       loadedItems.add(
         GroceryItem(
@@ -48,6 +55,7 @@ class _GroceryListState extends State<GroceryList> {
     }
     setState(() {
       _groceryItems = loadedItems;
+      _isLoading = false;
     });
   }
 
@@ -58,7 +66,7 @@ class _GroceryListState extends State<GroceryList> {
       ),
     );
 
-    if(newItem == null) {
+    if (newItem == null) {
       return;
     }
 
@@ -76,6 +84,12 @@ class _GroceryListState extends State<GroceryList> {
   @override
   Widget build(context) {
     Widget content = const Center(child: Text('No items added'));
+
+    if (_isLoading) {
+      content = const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
@@ -96,6 +110,10 @@ class _GroceryListState extends State<GroceryList> {
           ),
         ),
       );
+    }
+
+    if(_error != null) {
+      content = Center(child: Text(_error!));
     }
 
     return Scaffold(
